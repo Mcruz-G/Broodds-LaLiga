@@ -2,7 +2,7 @@ import pandas as pd
 import streamlit as st
 
 
-from utils2 import *
+from utils import *
 
 scores_and_fixtures_df = read_scores_and_fixtures()
 
