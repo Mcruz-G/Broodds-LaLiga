@@ -957,3 +957,4 @@ def scatterplot(df, season_stages):
         make_scatter_team_plot(data, xcolumn=x_var,ycolumn= y_var, title="", xlabel=x_var, ylabel=y_var, zoom=0.063)
 
 
+    
