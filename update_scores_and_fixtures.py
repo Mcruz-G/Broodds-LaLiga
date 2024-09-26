@@ -3,6 +3,8 @@ import pandas as pd
 import sqlite3
 import time
 from decimal import Decimal
+import numpy as np 
+import re
 
 # Define a function to determine the SeasonStage
 def determine_season_stage(date, round_info):
@@ -55,14 +57,16 @@ def fbref_pull_and_store_data(metadata):
             print(f"Descargando datos de {tabla_nombre}, {metaequipo}.{temporada} desde {link}")
             
             time.sleep(3)  # Espera 1 segundo entre cada solicitud
-            try:
-                datos_tabla = pd.read_html(link)
-                datos_tabla = datos_tabla[1]
-                datos_tabla['Temporada'] = temporada  # Agregar la temporada como columna
-                datos_tabla['MetaEquipo'] = metaequipo
-                datos_equipo.append(datos_tabla)
-            except:
-                pass
+            # try:
+            datos_tabla = pd.read_html(link)
+        
+            datos_tabla = datos_tabla[1]
+            datos_tabla['Temporada'] = temporada  # Agregar la temporada como columna
+            datos_tabla['MetaEquipo'] = metaequipo
+            datos_equipo.append(datos_tabla)
+
+            # except:
+            #     pass
     
     name_mapping = {
         "Barcelona" : "Barcelona",
@@ -93,14 +97,37 @@ def fbref_pull_and_store_data(metadata):
 
     return data
 
+
+def clean_goals(x):
+    if type(x) != str:
+        if np.isnan(x):
+            return 0.0
+        if type(x) == int or type(x) == float:
+            return int(x)
+        else: 
+            return Decimal(x)       
+    if ( "(" not in x) and ("." not in x):
+        return int(x)
+    if "(" in x:
+        return int(x.split("(")[0])
+    if "." in x:
+        return int(x.split(".")[0])
+    return int(x)
+ 
+
 def data_cleaning(df):
 
+       
     df['GF'] = df['GF'].apply(lambda x: x if x != None else '0')
-    df['GF'] = df['GF'].apply(lambda x: x if type(x) == int else int(x if ("(" not in x) and ("." not in x) else x.split("(")[0] if "(" in x else Decimal(x)))
-    
-    df['GA'] = df['GA'].apply(lambda x: x if x != None else '0')
-    df['GA'] = df['GA'].apply(lambda x: x if type(x) == int else int(x if ("(" not in x) and ("." not in x) else x.split("(")[0] if "(" in x else Decimal(x)))
+    # df['GF'] = df['GF'].apply(lambda x: str(re.sub(r'\D', '', x)))
+    df['GF'] = df['GF'].apply(clean_goals)
+    df['GF'] = df['GF'].astype('int')
 
+    df['GA'] = df['GA'].apply(lambda x: x if x != None else '0')
+    # df['GA'] = df['GA'].apply(lambda x: str(re.sub(r'\D', '', x)))
+    df['GA'] = df['GA'].apply(clean_goals)
+    df['GA'] = df['GA'].astype('int')
+    
     df['xG'] = df['xG'].apply(lambda x: x if x != None else '0')
     df['xG'] = df['xG'].astype(float)
 
